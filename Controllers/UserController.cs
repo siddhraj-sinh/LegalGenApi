@@ -128,7 +128,7 @@ namespace LegalGenApi.Controllers
                 }
 
                 //generate reset token
-                var token = GenerateResetToken();
+                var token = GenerateToken();
 
                 //store reset token to db
                 SaveResetToken(user, token);
@@ -147,7 +147,7 @@ namespace LegalGenApi.Controllers
         }
 
     
-        private string GenerateResetToken()
+        private string GenerateToken()
         {
             Guid tokenGuid = Guid.NewGuid();
             string tokenString = tokenGuid.ToString();
@@ -218,7 +218,45 @@ namespace LegalGenApi.Controllers
             }
         }
 
+        [HttpPost("signin")]
+        public async Task<IActionResult> Signin([FromBody] SignInModel model)
+        {
+            // Authenticate user credentials
+            var authenticatedUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.Password == model.Password);
 
+            if (authenticatedUser == null)
+                return Unauthorized("Invalid email or password");
+
+            // Generate an access token
+            var accessToken = GenerateToken();
+            authenticatedUser.AccessToken = accessToken;
+            await _context.SaveChangesAsync();
+            return Ok(new { AccessToken = accessToken });
+        }
+
+        [HttpPost("signout")]
+        public async Task<IActionResult> Signout()
+        {
+            // Get the current user's token from the request headers
+            string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+            // Retrieve the user associated with the token from the database
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.AccessToken == token);
+
+            if (user == null)
+            {
+                // User not found or already logged out
+                return NotFound();
+            }
+
+            // Clear the user's token
+            user.AccessToken = null;
+
+            // Save the changes to the database
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
 
     }
 }
