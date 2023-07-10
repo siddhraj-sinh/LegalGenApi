@@ -10,6 +10,7 @@
         public string Organization { get; set; }
         public string ContactDetails { get; set; }
 
+        public string ResetToken { get; set; }
         public ICollection<ResearchBook> ResearchBooks { get; set; }
         public ICollection<SearchQuery> SearchQueries { get; set; }
         public ICollection<ChatInteraction> ChatInteractions { get; set; }
