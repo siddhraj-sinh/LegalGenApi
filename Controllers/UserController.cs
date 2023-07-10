@@ -9,6 +9,10 @@ using LegalGenApi.Data;
 using LegalGenApi.Models;
 using System.Net.Mail;
 using System.Net;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace LegalGenApi.Controllers
 {
@@ -112,28 +116,25 @@ namespace LegalGenApi.Controllers
         {
             try
             {
-                //string recipient = email;
-                //string subject = "Task";
-                //string body = "body";
 
-                //await SendEmail(recipient, subject, body);
-                using (var smtpClient = new SmtpClient("smtp.gmail.com"))
+                //get user by email
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
                 {
-                    smtpClient.Port = 587;
-                    smtpClient.EnableSsl = true;
-                    smtpClient.Credentials = new NetworkCredential("contact.developer.siddharaj@gmail.com", "cgvynezscrnqgpkm");
-
-                    using (var message = new MailMessage())
-                    {
-                        message.From = new MailAddress("contact.developer.siddharaj@gmail.com");
-                        message.To.Add(email);
-                        message.Subject = "Forgot Password";
-                        message.Body = "psw:123";
-                        message.IsBodyHtml = true;
-
-                        await smtpClient.SendMailAsync(message);
-                    }
+                    // User not found
+                    return NotFound();
                 }
+
+                //generate reset token
+                var token = GenerateResetToken();
+
+                //store reset token to db
+                SaveResetToken(user, token);
+
+                await SendPasswordResetEmail(email, token);
+
+                
                 return Ok();
             }
             catch (Exception ex)
@@ -144,7 +145,41 @@ namespace LegalGenApi.Controllers
             }
         }
 
-     
+    
+        private string GenerateResetToken()
+        {
+            Guid tokenGuid = Guid.NewGuid();
+            string tokenString = tokenGuid.ToString();
 
+            return tokenString;
+        }
+        private async Task SaveResetToken(User user, string token)
+        {
+            user.ResetToken = token;
+           // user.ResetTokenExpiresAt = DateTime.UtcNow.AddHours(1); // Set the token expiration time as needed
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+        private async Task SendPasswordResetEmail(string email, string token)
+        {
+            using (var smtpClient = new SmtpClient("smtp.gmail.com"))
+            {
+                smtpClient.Port = 587;
+                smtpClient.EnableSsl = true;
+                smtpClient.Credentials = new NetworkCredential("contact.developer.siddharaj@gmail.com", "cgvynezscrnqgpkm");
+
+                using (var message = new MailMessage())
+                {
+                    message.From = new MailAddress("contact.developer.siddharaj@gmail.com");
+                    message.To.Add(email);
+                    message.Subject = "Forgot Password";
+                    message.Body = $"http://localhost:4200/user/reset-password/{token}";
+                    message.IsBodyHtml = true;
+
+                    await smtpClient.SendMailAsync(message);
+                }
+            }
+        }
     }
 }
