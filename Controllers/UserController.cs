@@ -49,6 +49,33 @@ namespace LegalGenApi.Controllers
             return user;
         }
 
+        [HttpGet("user/by-token")]
+        public async Task<IActionResult> GetUserByToken()
+        {
+            try
+            {
+                // Get the token from the request headers
+                string token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+                // Retrieve the user associated with the token from the database
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.AccessToken == token);
+
+                if (user == null)
+                {
+                    // User not found or token is invalid
+                    return NotFound("User not found");
+                }
+
+                // Return the user details
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception and return an appropriate error response
+                return StatusCode(500, "An error occurred while retrieving the user.");
+            }
+        }
+
         // PUT: api/User/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
