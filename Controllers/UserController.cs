@@ -245,6 +245,41 @@ namespace LegalGenApi.Controllers
             }
         }
 
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ChangePasswordModel model)
+        {
+            try
+            {
+
+                // get the token and password
+
+
+                // get the user based on the token
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.AccessToken == model.Token && u.Password == model.CurrentPassword);
+
+                if (user == null)
+                {
+                    // Token is invalid or expired
+                    return BadRequest("Invalid or expired reset token.");
+                }
+
+                // Update the user's password
+                user.Password = model.NewPassword; // Hash the password using a suitable hashing algorithm
+               
+
+
+                // Save the changes to the database
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception and return an appropriate error response
+                return StatusCode(500, "An error occurred while updating the password.");
+            }
+        }
+
         [HttpPost("signin")]
         public async Task<IActionResult> Signin([FromBody] SignInModel model)
         {
