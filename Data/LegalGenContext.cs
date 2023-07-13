@@ -1,9 +1,11 @@
 ﻿using LegalGenApi.Models;
 using Microsoft.AspNetCore.Authentication;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace LegalGenApi.Data
 {
+   
     public class LegalGenContext:DbContext
     {
         public LegalGenContext(DbContextOptions<LegalGenContext> options) : base(options)
