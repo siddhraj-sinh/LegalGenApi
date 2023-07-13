@@ -2,6 +2,8 @@ using LegalGenApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
+
 namespace LegalGenApi
 {
     public class Program
@@ -31,7 +33,16 @@ namespace LegalGenApi
   options.UseSqlServer(builder.Configuration.GetConnectionString("LegalGenContext")));
             //database exception filter
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+            builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+            {
+                googleOptions.ClientId = builder.Configuration.GetSection("GoogleAuthSettings")
+            .GetValue<string>("ClientId");
+                googleOptions.ClientSecret = builder.Configuration.GetSection("GoogleAuthSettings")
+            .GetValue<string>("ClientSecret");
+            });
             var app = builder.Build();
+
+           
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

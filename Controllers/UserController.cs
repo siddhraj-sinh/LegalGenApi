@@ -14,6 +14,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Identity.Client;
 
 namespace LegalGenApi.Controllers
 {
@@ -162,18 +165,18 @@ namespace LegalGenApi.Controllers
 
                 await SendPasswordResetEmail(email, token);
 
-                
+
                 return Ok();
             }
             catch (Exception ex)
             {
                 // Handle the exception and return an appropriate error response
-                
+
                 return StatusCode(500, "An error occurred while sending the email.");
             }
         }
 
-    
+
         private string GenerateToken()
         {
             Guid tokenGuid = Guid.NewGuid();
@@ -184,7 +187,7 @@ namespace LegalGenApi.Controllers
         private async Task SaveResetToken(User user, string token)
         {
             user.ResetToken = token;
-           // user.ResetTokenExpiresAt = DateTime.UtcNow.AddHours(1); // Set the token expiration time as needed
+            // user.ResetTokenExpiresAt = DateTime.UtcNow.AddHours(1); // Set the token expiration time as needed
 
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
@@ -217,7 +220,7 @@ namespace LegalGenApi.Controllers
             {
 
                 // get the token and password
-               
+
 
                 // get the user based on the token
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetToken == model.Token);
@@ -231,7 +234,7 @@ namespace LegalGenApi.Controllers
                 // Update the user's password
                 user.Password = model.Password; // Hash the password using a suitable hashing algorithm
                 user.ResetToken = null;
-                
+
 
                 // Save the changes to the database
                 await _context.SaveChangesAsync();
@@ -284,6 +287,39 @@ namespace LegalGenApi.Controllers
 
             return Ok();
         }
+
+        [HttpPost("google-login")]
+        public IActionResult GoogleLogin()
+        {
+            // Replace this code with your actual Google authentication logic
+            var authenticationUrl = "https://accounts.google.com"; // Example URL
+            return Ok(new { url = authenticationUrl });
+        }
+
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse()
+        {
+            // Handle the Google authentication response here
+            // Replace this code with your actual implementation
+
+            // Retrieve the authentication code or access token from the query parameters
+            var code = Request.Query["code"].ToString();
+
+            // Use the code or access token to authenticate the user and perform necessary actions
+
+            return Ok();
+        }
+
+        [HttpPost("signup")]
+        public async Task<IActionResult> Signup(User user)
+        {
+            // Add your signup logic here, such as saving the user to the database
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+        }
+
 
     }
 }
