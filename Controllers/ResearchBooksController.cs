@@ -100,6 +100,23 @@ namespace LegalGenApi.Controllers
             return NoContent();
         }
 
+        // GET: api/ResearchBooks/GetResearchBooksByUserId/5
+        [HttpGet("GetResearchBooksByUserId/{userId}")]
+        public async Task<ActionResult<IEnumerable<ResearchBook>>> GetResearchBooksByUserId(int userId)
+        {
+            var researchBooks = await _context.ResearchBooks
+                .Where(rb => rb.UserId == userId)
+                .ToListAsync();
+
+            if (researchBooks == null)
+            {
+                return NotFound();
+            }
+
+            return researchBooks;
+        }
+
+
         private bool ResearchBookExists(int id)
         {
             return _context.ResearchBooks.Any(e => e.Id == id);
